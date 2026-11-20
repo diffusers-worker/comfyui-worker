@@ -12,7 +12,14 @@ RUN apt-get update && apt-get install -y \
     software-properties-common \
     && add-apt-repository ppa:deadsnakes/ppa \
     && apt-get update && apt-get install -y \
-    curl
+    curl \
+    python3.13 \
+    git \
+    build-essential \
+    ffmpeg \
+    libsm6 \
+    libxext6 \
+    && rm -rf /var/lib/apt/lists/*
 
 RUN while IFS="|" read -r url bucket filename; do \
     if [ -n "$url" ] && [ -n "$filename" ]; then \
@@ -22,29 +29,17 @@ RUN while IFS="|" read -r url bucket filename; do \
     fi; \
   done < /app/models_list.txt
 
-# Устанавливаем базовые утилиты и добавляем репозиторий для свежего Python 3.11
-RUN apt-get install -y \
-    python3.13 \
-    python3.13-dev \
-    python3.13-distutils \
-    git \
-    build-essential \
-    ffmpeg \
-    libsm6 \
-    libxext6 \
-    && rm -rf /var/lib/apt/lists/*
-
-# Ставим pip именно для Python 3.11
+# Ставим pip именно для Python 3.13
 RUN curl -sS https://bootstrap.pypa.io/get-pip.py | python3.13
 
 WORKDIR /app
 
-# Обновляем инструменты сборки для Python 3.11
+# Обновляем инструменты сборки для Python 3.13
 RUN python3.13 -m pip install --no-cache-dir --upgrade pip setuptools wheel
 
 COPY requirements.txt /app/requirements.txt
 
-# Устанавливаем ваши зависимости в изолированную папку через Python 3.11
+# Устанавливаем ваши зависимости в изолированную папку через Python 3.13
 RUN python3.13 -m pip install --no-cache-dir --target=/app/site-packages -r /app/requirements.txt
 
 # Ставим runpod глобально
