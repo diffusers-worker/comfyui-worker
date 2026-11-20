@@ -1,0 +1,35 @@
+{
+  "input": {
+    "workflows": {
+      "text2image": [
+        {
+          "prompt": "anya forger, 1girl",
+          "checkpoint": "F:\\Models\\Illustrious\\illustrij_v21.safetensors",
+          "sampler": "euler_ancestral",
+          "steps": 1,
+          "cfg_scale": 1.5,
+          "images_per_prompt": 2,
+          "seed": 0,
+          "loras": [
+            {
+              "source": "F:\\Models\\Illustrious\\Anime to Realistic.safetensors",
+              "weight": 1.0
+            },
+            {
+              "source": "F:\\Models\\Illustrious\\Spy_X_Family_-_Anya_Forger_-_illustrious.safetensors",
+              "weight": 0.9
+            }
+          ]
+        }
+      ]
+    },
+    "config": {
+      "device": "cpu",
+      "verbose": true,
+      "results": "s3",
+      "downloader": {
+        "workspace_dir": "F:\\Models"
+      }
+    }
+  }
+}
