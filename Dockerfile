@@ -2,7 +2,7 @@ FROM nvidia/cuda:12.1.1-runtime-ubuntu22.04
 
 # Отключаем интерактивные диалоги при установке пакетов
 ENV DEBIAN_FRONTEND=noninteractive
-ENV HF_HOME=/app/diffusers
+ENV HF_HOME=/app/comfyui
 
 COPY src /app/src
 COPY handler.py /app/handler.py
@@ -24,9 +24,9 @@ RUN while IFS="|" read -r url bucket filename; do \
 
 # Устанавливаем базовые утилиты и добавляем репозиторий для свежего Python 3.11
 RUN apt-get install -y \
-    python3.11 \
-    python3.11-dev \
-    python3.11-distutils \
+    python3.13 \
+    python3.13-dev \
+    python3.13-distutils \
     git \
     build-essential \
     ffmpeg \
@@ -35,20 +35,20 @@ RUN apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Ставим pip именно для Python 3.11
-RUN curl -sS https://bootstrap.pypa.io/get-pip.py | python3.11
+RUN curl -sS https://bootstrap.pypa.io/get-pip.py | python3.13
 
 WORKDIR /app
 
 # Обновляем инструменты сборки для Python 3.11
-RUN python3.11 -m pip install --no-cache-dir --upgrade pip setuptools wheel
+RUN python3.13 -m pip install --no-cache-dir --upgrade pip setuptools wheel
 
 COPY requirements.txt /app/requirements.txt
 
 # Устанавливаем ваши зависимости в изолированную папку через Python 3.11
-RUN python3.11 -m pip install --no-cache-dir --target=/app/site-packages -r /app/requirements.txt
+RUN python3.13 -m pip install --no-cache-dir --target=/app/site-packages -r /app/requirements.txt
 
 # Ставим runpod глобально
-RUN python3.11 -m pip install --no-cache-dir runpod
+RUN python3.13 -m pip install --no-cache-dir runpod
 
-# Важно: запускаем именно через python3.11
-CMD ["python3.11", "-u", "/app/handler.py"]
+# Важно: запускаем именно через python3.13
+CMD ["python3.13", "-u", "/app/handler.py"]
