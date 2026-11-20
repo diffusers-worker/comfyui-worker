@@ -1,0 +1,61 @@
+name: Build, Push and Deploy to RunPod
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Free Disk Space (Ubuntu)
+        uses: jlumbroso/free-disk-space@main
+        with:
+          # preinstalled-runtimes: true
+          # android: true
+          # dotnet: true
+          # haskell: true
+          # large-packages: true
+          docker-images: true
+          swap-storage: true
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        id: docker_build
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository }}:v${{ github.run_number }}
+            ghcr.io/${{ github.repository }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # Automatic RunPod image deploy
+      - name: Deploy Update to RunPod Endpoint
+        run: |
+          
+          IMAGE_SHA="${{ steps.docker_build.outputs.digest }}"
+          FULL_IMAGE_PATH="ghcr.io/${{ github.repository }}@${IMAGE_SHA}"
+          
+          echo "Send image to RunPod: $FULL_IMAGE_PATH"
+          
+          curl -X PATCH "https://api.runpod.io/v2/serverless/t0ttoy9tufcgdy" \
+            -H "Authorization: Bearer ${{ secrets.RUNPOD_API_KEY }}" \
+            -H "Content-Type: application/json" \
+            -d "{\"image\": \"$FULL_IMAGE_PATH\"}"
