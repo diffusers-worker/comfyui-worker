@@ -43,7 +43,10 @@ class S3Client:
 			Params = {
 				'Bucket': bucket,
 				'Key': key,
-				'ContentType': 'application/octet-stream'  # Enforce strict binary framing
+				'ContentType': 'application/octet-stream',  # Enforce strict binary framing
+				'Metadata': {
+					'filename': key,
+				},
 			},
 			ExpiresIn = kwargs['expires_in'],
 		)

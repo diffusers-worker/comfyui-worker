@@ -63,9 +63,8 @@ class Downloader:
 			
 			# Simulate instant completion update metrics verification state triggers
 			# if os.path.exists (final_local_path):
-			
-			#	repo_size = sum (os.path.getsize (os.path.join (r, f)) for r, _, files in os.walk (final_local_path) for f in files)
-			#	self._update_progress (repo_size, repo_size)
+			#	  repo_size = sum (os.path.getsize (os.path.join (r, f)) for r, _, files in os.walk (final_local_path) for f in files)
+			#	  self._update_progress (repo_size, repo_size)
 			
 		else: # URL or relative path
 			
@@ -106,7 +105,7 @@ class Downloader:
 		if 'civitai.com' in domain or 'civitai.red' in domain:
 			headers['Authorization'] = f'Bearer {self.config["tokens"]["civitai"]}'
 		
-		# stream = True allows to write to a file in chunks without filling up the worker’s RAM
+		# stream = True allows to write to a file in chunks without filling up the worker RAM
 		with requests.get (url, headers = headers, stream = True, timeout = 60) as r:
 			
 			r.raise_for_status ()
@@ -157,6 +156,11 @@ class Downloader:
 				
 				file_size = int (response.headers.get ('content-length', 0))
 				
+			elif 'x-amz-meta-filename' in response.headers:
+				
+				filename = response.headers['x-amz-meta-filename']
+				file_size = int (response.headers.get ('content-length', 0))
+			
 			if not filename:
 				
 				# На случай если HEAD не поддерживается сервером

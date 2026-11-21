@@ -14,8 +14,6 @@ class ComfyWorkflow (Workflow):
 	
 	runner = ComfyDirectRunner ()
 	
-	images = list[Image]
-	
 	def reset_and_run (self, output_node_id: str) -> None:
 		
 		"""
@@ -32,7 +30,7 @@ class ComfyWorkflow (Workflow):
 		
 		super ().init (data)
 		
-		self.g = GraphBuilder ()
+		self.g = GraphBuilder ()  # We need to create new graph at every query
 	
 def tensor_to_pil (img_tensor) -> Image:
 	
