@@ -1,6 +1,8 @@
+import mimetypes
 import os
 import sys
 import threading
+import urllib.parse
 
 import boto3
 from boto3.s3.transfer import TransferConfig
@@ -13,6 +15,14 @@ class S3Client:
 	s3_client = None
 	
 	num_threads = 8
+	
+	INLINE_MIME_TYPES = {
+		'image/jpeg',
+		'image/png',
+		'image/gif',
+		'image/webp',
+		'application/pdf',
+	}
 	
 	def __init__ (self, config: dict):
 		
@@ -27,7 +37,7 @@ class S3Client:
 			config = Config (signature_version = 's3v4'),  # Strictly enforce AWS Signature Version 4
 		)
 		
-	def generate_upload_url (self, bucket: str, key: str, **kwargs) -> str:
+	def generate_upload_url (self, bucket: str, key: str, mime_type: str, **kwargs) -> str:
 		
 		"""
 		Generates a secure Presigned PUT URL.
@@ -35,23 +45,33 @@ class S3Client:
 		without holding any master cloud storage secret tokens.
 		"""
 		
+		params = {
+			'Bucket': bucket,
+			'Key': key,
+			'ContentType': 'application/octet-stream',  # Enforce strict binary framing
+		}
+		
+		encoded_filename = urllib.parse.quote (key)
+		
+		if mime_type in self.INLINE_MIME_TYPES:
+			
+			# Opens in browser
+			params['ResponseContentDisposition'] = f"inline; filename=\"file\"; filename*=UTF-8''{encoded_filename}"
+			params['ResponseContentType'] = mime_type
+		
+		else:
+			params['ResponseContentDisposition'] = f"attachment; filename=\"file\"; filename*=UTF-8''{encoded_filename}"
+		
 		if 'expires_in' not in kwargs:
 			kwargs['expires_in'] = 3600
 		
 		return self.s3_client.generate_presigned_url (
 			ClientMethod = 'put_object',
-			Params = {
-				'Bucket': bucket,
-				'Key': key,
-				'ContentType': 'application/octet-stream',  # Enforce strict binary framing
-				'Metadata': {
-					'filename': key,
-				},
-			},
+			Params = params,
 			ExpiresIn = kwargs['expires_in'],
 		)
-		
-	def generate_get_url (self, bucket: str, key: str, **kwargs) -> str:
+	
+	def generate_get_url (self, bucket: str, key: str, mime_type: str, **kwargs) -> str:
 		
 		"""
 		Generates a secure Presigned GET URL.
@@ -59,18 +79,31 @@ class S3Client:
 		without holding any master cloud storage secret tokens.
 		"""
 		
+		params = {
+			'Bucket': bucket,
+			'Key': key,
+		}
+		
+		encoded_filename = urllib.parse.quote (key)
+		
+		if mime_type in self.INLINE_MIME_TYPES:
+			
+			# Opens in browser
+			params['ResponseContentDisposition'] = f"inline; filename=\"file\"; filename*=UTF-8''{encoded_filename}"
+			params['ResponseContentType'] = mime_type
+			
+		else:
+			params['ResponseContentDisposition'] = f"attachment; filename=\"file\"; filename*=UTF-8''{encoded_filename}"
+		
 		if 'expires_in' not in kwargs:
 			kwargs['expires_in'] = 3600
 		
 		return self.s3_client.generate_presigned_url (
 			ClientMethod = 'get_object',
-			Params = {
-				'Bucket': bucket,
-				'Key': key,
-			},
+			Params = params,
 			ExpiresIn = kwargs['expires_in'],
 		)
-		
+	
 	def upload_file (self, file: str, bucket, **kwargs) -> str:
 		
 		if 'force' not in kwargs:
@@ -88,9 +121,11 @@ class S3Client:
 			
 			self.s3_client.upload_file (file, bucket, key, Callback = kwargs['callback'])
 			
-		return self.generate_get_url (bucket, key, **kwargs)
+		mime_type, _ = mimetypes.guess_type (file)
+		
+		return self.generate_get_url (bucket, key, mime_type, **kwargs)
 	
-	def upload_bytes (self, bytes: bytes, bucket: str, key: str, format: str, **kwargs) -> str:
+	def upload_bytes (self, bytes: bytes, bucket: str, key: str, mime_type: str, **kwargs) -> str:
 		
 		if not self.is_bucket_exists (bucket):
 			self.create_bucket (bucket)
@@ -99,10 +134,10 @@ class S3Client:
 			Bucket = bucket,
 			Key = key,
 			Body = bytes,
-			ContentType = f'image/{format.lower ()}',
+			ContentType = mime_type,
 		)
 		
-		return self.generate_get_url (bucket, key, **kwargs)
+		return self.generate_get_url (bucket, key, mime_type, **kwargs)
 		
 	def is_bucket_exists (self, bucket: str) -> bool:
 		

@@ -77,7 +77,9 @@ class Workflow (ABC):
 			if self.core.config['results'] == 's3':
 				
 				sha256 = get_bytes_sha256 (bytes)
-				output = self.core.s3_client.upload_bytes (bytes, 'results', f'{sha256}.{self.core.config["format"]}', self.core.config['format'])
+				mime_type = f'image/{self.core.config['format'].lower ()}'
+				
+				output = self.core.s3_client.upload_bytes (bytes, 'results', f'{sha256}.{self.core.config['format']}', mime_type)
 				
 			else:
 				output = base64_encode (bytes)
@@ -91,7 +93,9 @@ class Workflow (ABC):
 			if self.core.config['results'] == 's3':
 				
 				sha256 = get_bytes_sha256 (bytes)
-				output = self.core.s3_client.upload_bytes (bytes, 'results', f'{sha256}.{self.core.config["format"]}', self.core.config['format'])
+				mime_type = f'image/{self.core.config['format'].lower ()}'
+				
+				output = self.core.s3_client.upload_bytes (bytes, 'results', f'{sha256}.{self.core.config['format']}', mime_type)
 				
 			else:
 				output = base64_encode (bytes)
