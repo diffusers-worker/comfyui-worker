@@ -159,7 +159,7 @@ class Downloader:
 			if not filename:
 				
 				params = dict (parse_qsl (parsed_url.query))
-				
+				print (params)
 				disposition = params.get ('response-content-disposition', '')
 				
 				if "filename*=UTF-8''" in disposition:
@@ -244,7 +244,7 @@ class Downloader:
 							raise RuntimeError (e)
 							
 					else:
-						
+						print (final_local_path)
 						self._s3_client.download_file (
 							final_local_path,
 							kwargs['subfolder'],
