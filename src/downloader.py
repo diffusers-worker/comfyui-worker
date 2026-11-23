@@ -166,7 +166,7 @@ class Downloader:
 					
 					raw_name = disposition.split ("filename*=UTF-8''")[-1]
 					filename = unquote (raw_name)
-				
+				print (filename)
 				if not filename:
 					
 					# На случай если HEAD не поддерживается сервером

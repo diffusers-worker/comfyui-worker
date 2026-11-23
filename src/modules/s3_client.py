@@ -196,7 +196,7 @@ class S3Client:
 			multipart_threshold = 1024 * 1024 * 25,  # 25 Mb
 			multipart_chunksize = 1024 * 1024 * 25,
 		)
-		
+		print (key)
 		self.s3_client.download_file (
 			bucket,
 			key,
