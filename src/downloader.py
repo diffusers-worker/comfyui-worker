@@ -155,11 +155,6 @@ class Downloader:
 					filename = names[0].strip ('"')
 				
 				file_size = int (response.headers.get ('content-length', 0))
-				
-			elif 'x-amz-meta-filename' in response.headers:
-				
-				filename = response.headers['x-amz-meta-filename']
-				file_size = int (response.headers.get ('content-length', 0))
 			
 			if not filename:
 				
