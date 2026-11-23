@@ -3,7 +3,7 @@ import re
 import requests
 
 from huggingface_hub import snapshot_download
-from urllib.parse import urlparse
+from urllib.parse import urlparse, parse_qsl, unquote
 from typing import List, Optional, Callable, LiteralString
 from concurrent.futures import ThreadPoolExecutor
 
@@ -158,18 +158,29 @@ class Downloader:
 			
 			if not filename:
 				
-				# На случай если HEAD не поддерживается сервером
-				response = requests.get (url, stream = True)
+				params = dict (parse_qsl (parsed_url.query))
 				
-				if 'content-disposition' in response.headers:
+				disposition = params.get ('response-content-disposition', '')
+				
+				if "filename*=UTF-8''" in disposition:
 					
-					cd = response.headers['content-disposition']
-					names = re.findall (r'filename=(.+)', cd)
+					raw_name = disposition.split ("filename*=UTF-8''")[-1]
+					filename = unquote (raw_name)
+				
+				if not filename:
 					
-					if names:
-						filename = names[0].strip ('"')
+					# На случай если HEAD не поддерживается сервером
+					response = requests.get (url, stream = True)
 					
-					file_size = int (response.headers.get ('content-length', 0))
+					if 'content-disposition' in response.headers:
+						
+						cd = response.headers['content-disposition']
+						names = re.findall (r'filename=(.+)', cd)
+						
+						if names:
+							filename = names[0].strip ('"')
+						
+						file_size = int (response.headers.get ('content-length', 0))
 					
 			if filename:
 				
@@ -237,6 +248,7 @@ class Downloader:
 						self._s3_client.download_file (
 							final_local_path,
 							kwargs['subfolder'],
+							os.path.basename (final_local_path),
 							callback = kwargs['callback']
 						)
 						

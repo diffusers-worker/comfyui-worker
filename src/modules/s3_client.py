@@ -188,24 +188,21 @@ class S3Client:
 				CreateBucketConfiguration = { 'LocationConstraint': region }
 			)
 		
-	def download_file (self, file, bucket, **kwargs):
+	def download_file (self, file, bucket: str, key: str, **kwargs):
 		
 		config = TransferConfig (
 			use_threads = True,
 			max_concurrency = self.num_threads,
 			multipart_threshold = 1024 * 1024 * 25,  # 25 Mb
-			multipart_chunksize = 1024 * 1024 * 25
+			multipart_chunksize = 1024 * 1024 * 25,
 		)
-		
-		if 'object_key' not in kwargs:
-			kwargs['object_key'] = os.path.basename (file)
 		
 		self.s3_client.download_file (
 			bucket,
-			kwargs['object_key'],
+			key,
 			file,
 			Callback = kwargs['callback'],
-			Config = config
+			Config = config,
 		)
 		
 class S3Progress (object):
